@@ -41,3 +41,7 @@ or find the latest version in [Releases](https://github.com/sslow-dev/ChatLogger
 
 >[!NOTE] 
 >It can take while for the latest version of the plugin to show up on the BakkesPlugins page. So install from here if you need the latest version.
+
+## View your saved chats!
+
+This fork is simply to include an HTML page for a user-friendly chat viewer. For example, you want to share your in-game chats with friends or via Discord etc. Download the [chatlog_viewer.html file](https://github.com/patrickl96/ChatLogger/blob/main/chatlog_viewer.html) and you can visualise your chat logs intuitively
