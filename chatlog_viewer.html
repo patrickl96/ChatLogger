@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rocket League Chatlog Viewer</title>
+  <!-- Using Google Fonts for 'Inter' -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* Basic Reset and Body Styles */
+    html {
+      margin: 0;
+      padding: 0;
+      font-size: 16px; /* Base font size */
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f0f2f5; /* Light grey background */
+      color: #1a202c; /* Darker text for better contrast */
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px; /* Padding around the entire page content */
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      align-items: center; /* Center content like h1, input, chat-container */
+    }
+
+    /* Page Title */
+    h1 {
+      color: #2d3748; /* Slightly darker title color */
+      margin-top: 0; /* Body padding handles top space */
+      margin-bottom: 24px;
+      font-size: 1.75rem; /* Larger title */
+      font-weight: 700;
+      text-align: center;
+    }
+
+    /* File Input */
+    input[type="file"] {
+      display: block;
+      margin: 0 auto 24px auto; /* Centering and bottom margin */
+      padding: 12px 18px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e0; /* Softer border */
+      background-color: #ffffff;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: #4a5568;
+      transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    input[type="file"]:hover {
+      border-color: #a0aec0;
+    }
+    input[type="file"]:focus {
+      outline: none;
+      border-color: #4299e1; /* Blue border on focus */
+      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+    }
+
+    /* Main Chat Container */
+    .chat-container {
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); /* Softer shadow */
+      padding: 20px; /* Padding inside the container */
+      width: 100%; /* Responsive width */
+      max-width: 600px; /* Reduced width as per request */
+      margin-left: auto;
+      margin-right: auto;
+      box-sizing: border-box;
+      overflow-y: auto; /* Scroll for long chats */
+    }
+
+    /* Match Break Line Styling */
+    .match-break-line {
+      margin: 30px 5%; /* Vertical and some horizontal margin */
+      text-align: center;
+      position: relative; /* For pseudo-element positioning */
+    }
+    .match-break-line::before {
+      content: "";
+      display: block;
+      border-top: 2px dashed #adb5bd; /* Slightly darker dashed line */
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      z-index: 1; /* Ensure line is behind the text */
+    }
+    .match-break-line span {
+      background-color: #ffffff; /* Match chat container background to "cut through" the line */
+      padding: 0 15px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #6c757d; /* Grey text */
+      position: relative;
+      z-index: 2; /* Ensure text is above the line */
+      display: inline-block;
+    }
+
+    /* Timestamp Grouping for Dates */
+    .date-group-timestamp {
+      text-align: center;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #4a5568;
+      margin: 24px 0 12px 0;
+      padding: 4px 8px;
+      background-color: #e2e8f0;
+      border-radius: 12px;
+      display: inline-block;
+      left: 50%;
+      position: relative;
+      transform: translateX(-50%);
+    }
+
+    /* Individual Chat Entry Block (contains name, bubbles, meta) */
+    .chat-entry {
+      display: flex;
+      flex-direction: column;
+      margin-top: 10px;
+      margin-bottom: 15px;
+      max-width: 80%;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    /* Alignment for 'me'/'teammate' vs 'opponent' entries */
+    .chat-entry.me, .chat-entry.teammate {
+      margin-left: auto;
+      margin-right: 0;
+      align-items: flex-end;
+    }
+    .chat-entry.opponent {
+      margin-left: 0;
+      margin-right: auto;
+      align-items: flex-start;
+    }
+
+    /* Player Name Badge */
+    .player-name-badge {
+      font-weight: 500;
+      margin-bottom: 5px;
+      font-size: 0.8rem;
+      color: #4a5568;
+      padding: 0 2px;
+    }
+
+    /* Wrapper for multiple bubbles from the same user in a group */
+    .chat-bubbles-wrapper {
+      display: flex;
+      flex-direction: column;
+      width: auto;
+      gap: 4px;
+    }
+
+    /* Individual Chat Bubble Styling */
+    .chat-bubble {
+      font-size: 1.05rem;
+      padding: 10px 14px;
+      border-radius: 18px;
+      display: inline-block;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      max-width: 100%;
+      line-height: 1.4;
+      box-sizing: border-box;
+      text-align: left;
+      white-space: pre-wrap;
+    }
+
+    /* My messages: Blue */
+    .chat-entry.me .chat-bubble {
+      background-color: #3b82f6;
+      color: white;
+      border-bottom-right-radius: 6px;
+    }
+
+    /* Teammate messages: Green */
+    .chat-entry.teammate .chat-bubble {
+      background-color: #10b981;
+      color: white;
+      border-bottom-right-radius: 6px;
+    }
+
+    /* Opponent messages: Red */
+    .chat-entry.opponent .chat-bubble {
+      background-color: #ef4444;
+      color: white;
+      border-bottom-left-radius: 6px;
+    }
+
+    /* Meta Information (Platform, Time) */
+    .chat-meta {
+      font-size: 0.7rem;
+      color: #718096;
+      margin-top: 5px;
+      padding: 0 2px;
+    }
+
+    /* Placeholder/Info Message */
+    .info-message {
+      text-align: center;
+      color: #718096;
+      padding: 20px;
+      font-style: italic;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Rocket League Chat Viewer</h1>
+  <input type="file" id="chatfile" accept=".json">
+  <div class="chat-container" id="chatlog">
+    <div class="info-message">Upload a Rocket League chatlog JSON file to view messages.</div>
+  </div>
+
+  <script>
+    document.getElementById('chatfile').addEventListener('change', function(event) {
+      const file = event.target.files[0];
+      const container = document.getElementById('chatlog');
+
+      if (!file) {
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        container.innerHTML = '';
+
+        try {
+          const jsonData = JSON.parse(e.target.result);
+
+          if (!jsonData || !Array.isArray(jsonData.chatMessages) || jsonData.chatMessages.length === 0) {
+            container.innerHTML = '<div class="info-message">No chat messages found in the file, or the file is not in the expected format.</div>';
+            return;
+          }
+
+          let lastPlayerName = null;
+          let lastRelevantMessageTimestamp = null; // Stores timestamp of the last message that was *not* part of a new match segment
+          let lastRelationClass = null;
+          let currentGroupEntryDiv = null;
+          let bubblesWrapper = null;
+          let currentGroupMetaDiv = null;
+          let lastBubbleContentElement = null;
+          let lastBubbleTimestamp = null; // Timestamp of the message *within* the last bubble
+          let lastDateString = null;
+
+          // New state variables for the "gg" logic
+          let potentialMatchEndTimestamp = null;   // Stores timestamp of the latest 'gg' or message immediately following a 'gg'
+
+          // Constants
+          const GG_QUIET_PERIOD_MS = 15 * 1000; // 15 seconds after a 'gg' or subsequent message in that sequence
+          const MAJOR_GROUP_TIME_GAP_MS = 60 * 1000; // 1 minute for a new player/group within a match
+          const BUBBLE_CONCATENATION_MS = 5 * 1000; // 5 seconds to concatenate messages in same bubble
+          const GG_FOLLOWUP_GRACE_PERIOD_MS = 30 * 1000; // Time within which non-gg messages still extend the 'end-of-game' potential
+
+
+          jsonData.chatMessages.forEach(entry => {
+            if (!entry || typeof entry.chat !== 'string' || typeof entry.playerName !== 'string' || typeof entry.time !== 'string' || typeof entry.relation !== 'string') {
+                 console.warn('Skipping malformed chat entry (missing critical fields):', entry);
+                 return;
+            }
+            if (entry.chat.trim() === "") {
+                return;
+            }
+
+            const currentTimestamp = new Date(entry.time);
+            if (isNaN(currentTimestamp.getTime())) {
+                console.warn('Skipping entry with invalid time:', entry);
+                return;
+            }
+
+            // 1. Check for Match Break *before* processing the current message
+            let shouldInsertMatchBreak = false;
+            if (potentialMatchEndTimestamp !== null) {
+                // If we were waiting for a quiet period after a potential match end...
+                if (currentTimestamp.getTime() - potentialMatchEndTimestamp.getTime() > GG_QUIET_PERIOD_MS) {
+                    shouldInsertMatchBreak = true;
+                }
+            }
+
+            if (shouldInsertMatchBreak) {
+                const matchBreakDiv = document.createElement('div');
+                matchBreakDiv.className = 'match-break-line';
+                const matchBreakSpan = document.createElement('span');
+                matchBreakSpan.textContent = 'New Match'; // Updated text to "New Match"
+                matchBreakDiv.appendChild(matchBreakSpan);
+                container.appendChild(matchBreakDiv);
+
+                // Reset all session-specific state for the new segment
+                lastPlayerName = null;
+                lastDateString = null;
+                lastRelationClass = null;
+                currentGroupEntryDiv = null;
+                bubblesWrapper = null;
+                currentGroupMetaDiv = null;
+                lastBubbleContentElement = null;
+                lastBubbleTimestamp = null;
+                potentialMatchEndTimestamp = null; // Crucially, reset for the new match
+                lastRelevantMessageTimestamp = null; // This needs to be reset for the date/major group logic
+            }
+
+
+            // 2. Update potentialMatchEndTimestamp based on current message
+            const isGgMessage = entry.chat.toLowerCase() === 'gg';
+
+            if (isGgMessage) {
+                potentialMatchEndTimestamp = currentTimestamp;
+            } else if (potentialMatchEndTimestamp !== null) {
+                // If a 'gg' was seen previously, and this non-gg message is within a grace period,
+                // extend the potentialMatchEndTimestamp to this message's timestamp.
+                if (currentTimestamp.getTime() - potentialMatchEndTimestamp.getTime() <= GG_FOLLOWUP_GRACE_PERIOD_MS) {
+                    potentialMatchEndTimestamp = currentTimestamp;
+                } else {
+                    // If it's a non-gg message and outside the grace period of the last 'gg',
+                    // then the 'gg' sequence has ended without a quiet period being met,
+                    // so reset potentialMatchEndTimestamp.
+                    potentialMatchEndTimestamp = null;
+                }
+            }
+
+
+            // 3. Date Grouping (remains mostly same, but consider lastRelevantMessageTimestamp for logic)
+            const currentDateString = currentTimestamp.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+            if (currentDateString !== lastDateString) {
+                const dateGroupDiv = document.createElement('div');
+                dateGroupDiv.className = 'date-group-timestamp';
+                dateGroupDiv.textContent = currentDateString;
+                container.appendChild(dateGroupDiv);
+                lastDateString = currentDateString;
+                lastPlayerName = null; // Force new major group after date change
+            }
+
+            // 4. Determine if a NEW MAJOR GROUP (new player name badge, new meta line) is needed
+            const timeSinceLastMajorGroupMessage = lastRelevantMessageTimestamp ? currentTimestamp.getTime() - lastRelevantMessageTimestamp.getTime() : Infinity;
+            const isNewMajorGroup = !lastPlayerName ||
+                                    lastPlayerName !== entry.playerName ||
+                                    lastRelationClass !== entry.relation.toLowerCase() ||
+                                    timeSinceLastMajorGroupMessage > MAJOR_GROUP_TIME_GAP_MS;
+
+            if (isNewMajorGroup) {
+              currentGroupEntryDiv = document.createElement('div');
+              currentGroupEntryDiv.className = `chat-entry ${entry.relation.toLowerCase()}`;
+              
+              const playerNameBadge = document.createElement('div');
+              playerNameBadge.className = 'player-name-badge';
+              playerNameBadge.textContent = entry.playerName;
+              currentGroupEntryDiv.appendChild(playerNameBadge);
+
+              bubblesWrapper = document.createElement('div');
+              bubblesWrapper.className = 'chat-bubbles-wrapper';
+              currentGroupEntryDiv.appendChild(bubblesWrapper);
+
+              currentGroupMetaDiv = document.createElement('div');
+              currentGroupMetaDiv.className = 'chat-meta';
+              currentGroupEntryDiv.appendChild(currentGroupMetaDiv); 
+
+              container.appendChild(currentGroupEntryDiv);
+
+              lastBubbleContentElement = null; // Reset for the new group
+              lastBubbleTimestamp = null;      // Reset bubble timestamp for the new group
+            }
+
+            // 5. Condition for concatenating into the *last bubble* within this major group
+            const canConcatenateToLastBubble = lastBubbleContentElement &&
+                                               lastBubbleTimestamp && 
+                                               (currentTimestamp.getTime() - lastBubbleTimestamp.getTime()) <= BUBBLE_CONCATENATION_MS;
+
+            if (canConcatenateToLastBubble) {
+              lastBubbleContentElement.textContent += '\n' + entry.chat; 
+            } else {
+              const newChatBubble = document.createElement('div');
+              newChatBubble.className = 'chat-bubble'; 
+              newChatBubble.textContent = entry.chat;
+              bubblesWrapper.appendChild(newChatBubble);
+              lastBubbleContentElement = newChatBubble; 
+            }
+            
+            // 6. Update meta-info for the current major group (always reflects the latest message in it)
+            const timeString = currentTimestamp.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+            currentGroupMetaDiv.textContent = `${timeString} · ${entry.platform || 'N/A'}`; // Time then Platform
+
+            // 7. Update trackers for the next iteration
+            lastPlayerName = entry.playerName;
+            lastRelationClass = entry.relation.toLowerCase();
+            lastBubbleTimestamp = currentTimestamp; // Timestamp of this message, for next bubble concat check
+            lastRelevantMessageTimestamp = currentTimestamp; // Update this after processing the current message (for major group and date logic)
+          });
+          
+          // Display info message if no valid chat messages were processed after all filtering
+          if (container.children.length === 0 || 
+              (container.children.length === 1 && 
+               (container.firstChild.classList.contains('date-group-timestamp') || container.firstChild.classList.contains('match-break-line')) && 
+               !container.firstChild.nextSibling) ) { 
+             if (!container.querySelector('.chat-entry')) { 
+                container.innerHTML = '<div class="info-message">No valid chat messages to display after filtering.</div>';
+             }
+          }
+
+        } catch (err) {
+          container.innerHTML = `<div class="info-message">Error: Could not parse the JSON file. Please ensure it's valid. (${err.message})</div>`;
+          console.error('Error processing file:', err);
+        }
+      };
+      reader.onerror = function() {
+        const errorContainer = document.getElementById('chatlog') || document.body;
+        errorContainer.innerHTML = '<div class="info-message">Error: Could not read the file.</div>';
+        console.error('Error reading file:', reader.error);
+      };
+      reader.readAsText(file);
+    });
+  </script>
+</body>
+</html>
