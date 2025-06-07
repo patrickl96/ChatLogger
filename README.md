@@ -36,12 +36,18 @@ Chats will be stored in the `Chat Logs` folder inside your BakkesMod `data` fold
 
 Install from the official [BakkesPlugins page](https://bakkesplugins.com/plugins/view/417)
 
-or find the latest version in [Releases](https://github.com/sslow-dev/ChatLogger/releases)
+or find the latest version in [Releases](https://github.com/patrickl96/ChatLogger/releases)
 
 
 >[!NOTE] 
 >It can take while for the latest version of the plugin to show up on the BakkesPlugins page. So install from here if you need the latest version.
 
-## View your saved chats!
+# Chatlog Viewer (HTML companion)
 
-This fork is simply to include an HTML page for a user-friendly chat viewer. For example, you want to share your in-game chats with friends or via Discord etc. Download the [chatlog_viewer.html file](https://github.com/patrickl96/ChatLogger/blob/main/chatlog_viewer.html) and you can visualise your chat logs intuitively
+Optionally you can manually review your saved chats- useful for sharing via screenshot via Discord or with friends for example
+
+Download the chatlog_viewer.html in [Releases](https://github.com/patrickl96/ChatLogger/releases)
+
+Saved chats should be located in ```%appdata%/bakkesmod/bakkesmod/data/Chat Logs``` otherwise check if your Bakkesmod folder is installed elsewhere
+
+  <img src="https://i.imgur.com/AoyEe9Y.png">
